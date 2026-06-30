@@ -1,4 +1,4 @@
-# zig-get
+# zget
 
 A parallel file downloader written in Zig. Downloads files over HTTP/HTTPS using multiple concurrent connections with optional SHA256 integrity verification.
 
