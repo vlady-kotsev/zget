@@ -3,7 +3,7 @@ const std = @import("std");
 const config = @import("config");
 const progress = @import("progress.zig");
 pub const SHA256_HEX_LEN: u64 = 64;
-const N_CONNECTION: u64 = 20;
+pub const DEFAULT_N_CONNECTIONS: u64 = 20;
 
 pub const ZigGetError = error{
     UrlNotProvided,
@@ -16,10 +16,11 @@ pub const ZGet = struct {
     client: std.http.Client,
     allocator: std.mem.Allocator,
     io: std.Io,
+    n_connections: u64,
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator, io: std.Io) Self {
+    pub fn init(allocator: std.mem.Allocator, io: std.Io, n_connections: u64) Self {
         return Self{
             .client = .{
                 .allocator = allocator,
@@ -27,6 +28,7 @@ pub const ZGet = struct {
             },
             .io = io,
             .allocator = allocator,
+            .n_connections = n_connections,
         };
     }
 
@@ -94,7 +96,7 @@ pub const ZGet = struct {
         defer group.cancel(self.io);
 
         const file_length = try self.get_file_length(uri);
-        const n_connection: u64 = @min(file_length, N_CONNECTION);
+        const n_connection: u64 = @min(file_length, self.n_connections);
         const chunk_size: u64 = file_length / n_connection;
         const remainder_size: u64 = file_length % n_connection;
 

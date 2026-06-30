@@ -16,8 +16,13 @@ pub fn main(init: std.process.Init) !void {
         return ZigGetError.UrlNotProvided;
     }
 
+    var n_connections: u64 = zig_get.DEFAULT_N_CONNECTIONS;
+    if (args.len == 3) {
+        n_connections = try std.fmt.parseInt(u64, args[2], 10);
+    }
+
     const uri = try std.Uri.parse(args[1]);
-    var zget = ZGet.init(init.gpa, threaded_io.io());
+    var zget = ZGet.init(init.gpa, threaded_io.io(), n_connections);
     defer zget.deinit();
 
     const file_name = std.Io.Dir.path.basenamePosix(uri.path.percent_encoded);
@@ -26,8 +31,8 @@ pub fn main(init: std.process.Init) !void {
     defer out_file.close(threaded_io.io());
 
     const file_length = try zget.download_file(uri, out_file);
-    if (args.len >= 3) {
-        const integrity_hash = args[2];
+    if (args.len >= 4) {
+        const integrity_hash = args[3];
         if (integrity_hash.len != zig_get.SHA256_HEX_LEN) {
             return ZigGetError.InvalidIntegrityHash;
         }
@@ -35,5 +40,4 @@ pub fn main(init: std.process.Init) !void {
         try zget.verify_integrity(out_file, file_length, integrity_hash);
         try std.Io.File.stdout().writeStreamingAll(threaded_io.io(), "Data integrity checked!\n");
     }
-    //std.debug.print("Status: {s}\n", .{file_status.phrase() orelse "Chedaaa moi"});
 }
